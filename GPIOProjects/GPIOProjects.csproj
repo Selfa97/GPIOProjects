@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>GPIOProjects</RootNamespace>
+    <Configurations>Debug;Release;Projects;Console</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Device.Gpio" Version="1.1.0-prerelease.20276.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GPIOInterfaces\GPIOInterfaces.csproj" />
+  </ItemGroup>
+
+</Project>
