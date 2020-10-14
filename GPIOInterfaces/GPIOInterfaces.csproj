@@ -1,8 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Configurations>Debug;Release;Projects;Console</Configurations>
+    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GPIOModels\GPIOModels.csproj" />
+  </ItemGroup>
 
 </Project>
