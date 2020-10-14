@@ -29,7 +29,7 @@ namespace GPIOProjects
                 _controller.Write(_pin, PinValue.Low);
 
                 Thread.Sleep(_sleepTime);
-            } while (!Console.KeyAvailable && !cancellationTokenSource.Token.IsCancellationRequested);
+            } while (!cancellationTokenSource.Token.IsCancellationRequested); 
         }
 
         protected override void Startup()

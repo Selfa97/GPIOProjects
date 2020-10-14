@@ -11,9 +11,9 @@ using System.Text.Json;
 using GPIOInterfaces.Contracts;
 using GPIOProjects.Runner;
 using Microsoft.Extensions.Options;
-using System.Threading;
 #if DEBUG
 using System.Diagnostics;
+using System.Threading;
 #endif
 
 namespace GPIORunner
@@ -43,28 +43,19 @@ namespace GPIORunner
                 }
             }
 
-            if (true) //while (true)
+            while (true)
             {
                 Console.WriteLine("Enter the name of the project to run or 'Q' to quit.");
                 Console.WriteLine($"Known projects: {JsonSerializer.Serialize(projects.Select(project => project.Name))}");
 
-                Thread.Sleep(1000);
-                Console.WriteLine("Testing Async write...");
-                Thread.Sleep(200);
-                Console.WriteLine("Testing Async write...");
-                Thread.Sleep(400);
-                Console.WriteLine("Testing Async write...");
-                Thread.Sleep(11000);
+                string input = Console.ReadLine().ToLower();
 
-                var input = "LEDBlink";
-
-                //if (input == "q")
-                //    break;
+                if (input == "q")
+                    break;
 
                 RunnerResult result = serviceProvider.GetService<IProjectRunner>().CreateProjectInstance(input);
 
                 HandelResult(input, result);
-                Thread.Sleep(11000);
             }
         }
 
