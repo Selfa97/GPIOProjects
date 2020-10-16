@@ -28,12 +28,12 @@ namespace GPIOProjects.Runner
             return _activeProjects.Any();
         }
 
-        public RunnerResult CreateProjectInstance(string projectName)
+        public (RunnerResult, string) CreateProjectInstance(string projectName)
         {
-            if (IsProjectRunning())
-                return RunnerResult.AnotherProjectRunning;
-
             var project = _projects.FirstOrDefault(project => project.Name.ToLower() == projectName.ToLower());
+            
+            if (IsProjectRunning())
+                return (RunnerResult.AnotherProjectRunning, project?.Name ?? projectName);
 
             if (project != null)
             {
@@ -48,16 +48,16 @@ namespace GPIOProjects.Runner
                         runningProject.ContinueWith(finishedProject => RemoveCompletedProject(finishedProject));
                         _activeProjects.Add(runningProject);
 
-                        return RunnerResult.Success;
+                        return (RunnerResult.Success, project.Name);
                     }
                     else
-                        return RunnerResult.ClassNotFound;
+                        return (RunnerResult.ClassNotFound, project.Name);
                 }
                 else
-                    return RunnerResult.ProjectNotRunnable;
+                    return (RunnerResult.ProjectNotRunnable, project.Name);
             }
             else
-                return RunnerResult.UnknownProject;
+                return (RunnerResult.UnknownProject, projectName);
         }
 
         private void RemoveCompletedProject(Task finishedProject)

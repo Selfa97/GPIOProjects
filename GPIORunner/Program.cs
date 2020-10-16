@@ -37,9 +37,9 @@ namespace GPIORunner
             {
                 if (project.RunOnStart)
                 {
-                    RunnerResult result = serviceProvider.GetService<IProjectRunner>().CreateProjectInstance(project.Name);
+                    (RunnerResult result, string name) = serviceProvider.GetService<IProjectRunner>().CreateProjectInstance(project.Name);
 
-                    HandelResult(project.Name, result);
+                    HandelResult(name, result);
                 }
             }
 
@@ -53,34 +53,34 @@ namespace GPIORunner
                 if (input.ToLower() == "q")
                     break;
 
-                RunnerResult result = serviceProvider.GetService<IProjectRunner>().CreateProjectInstance(input);
+                (RunnerResult result, string name) = serviceProvider.GetService<IProjectRunner>().CreateProjectInstance(input);
 
-                HandelResult(input, result);
+                HandelResult(name, result);
             }
         }
 
-        private static void HandelResult(string input, RunnerResult result)
+        private static void HandelResult(string name, RunnerResult result)
         {
             switch (result)
             {
                 case RunnerResult.Success:
-                    Console.WriteLine($"Running project {input}" + Environment.NewLine);
+                    Console.WriteLine($"Running project {name}" + Environment.NewLine);
                     break;
                 
                 case RunnerResult.AnotherProjectRunning:
-                    Console.WriteLine($"Cannot run {input}. Another project is already running." + Environment.NewLine);
+                    Console.WriteLine($"Cannot run {name}. Another project is already running." + Environment.NewLine);
                     break;
 
                 case RunnerResult.ProjectNotRunnable:
-                    Console.WriteLine($"{input} is not currently setup and cannot be run." + Environment.NewLine);
+                    Console.WriteLine($"{name} is not currently setup and cannot be run." + Environment.NewLine);
                     break;
 
                 case RunnerResult.UnknownProject:
-                    Console.WriteLine($"{input} is not a recognised project." + Environment.NewLine);
+                    Console.WriteLine($"{name} is not a recognised project." + Environment.NewLine);
                     break;
 
                 case RunnerResult.ClassNotFound:
-                    Console.WriteLine($"Could not get type for: {input}" + Environment.NewLine);
+                    Console.WriteLine($"Could not get type for: {name}" + Environment.NewLine);
                     break;
 
                 default:

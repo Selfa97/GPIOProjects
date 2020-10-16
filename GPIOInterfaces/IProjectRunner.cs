@@ -4,7 +4,7 @@ namespace GPIOInterfaces
 {
     public interface IProjectRunner
     {
-        public RunnerResult CreateProjectInstance(string projectName);
+        public (RunnerResult, string) CreateProjectInstance(string projectName);
 
         public bool IsProjectRunning();
     }
