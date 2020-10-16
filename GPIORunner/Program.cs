@@ -1,6 +1,5 @@
 ﻿using GPIOInterfaces;
 using GPIOProjects;
-using GPIOProjects.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -9,6 +8,9 @@ using System.Device.Gpio;
 using System.Linq;
 using GPIOModels.Configuration;
 using System.Text.Json;
+using GPIOInterfaces.Contracts;
+using GPIOProjects.Runner;
+using Microsoft.Extensions.Options;
 #if DEBUG
 using System.Diagnostics;
 using System.Threading;
@@ -18,8 +20,6 @@ namespace GPIORunner
 {
     class Program
     {
-        private static List<ProjectConfig> _projects = new List<ProjectConfig>();
-
         static void Main(string[] args)
         {
 #if DEBUG
@@ -31,58 +31,60 @@ namespace GPIORunner
 #endif
 
             var serviceProvider = ConfigureServices().BuildServiceProvider();
+            var projects = serviceProvider.GetService<IOptions<List<ProjectConfig>>>().Value;
 
-            foreach (var project in _projects)
+            foreach (ProjectConfig project in projects)
             {
                 if (project.RunOnStart)
                 {
-                    if (project.Runnable)
-                    {
-                        var assemblyTypes = typeof(BaseProject).Assembly.GetTypes();
-                        var projectType = assemblyTypes.FirstOrDefault(type => type.Name == project.Name);
-                        if (projectType != null)
-                        {
-                            IProject projectService = (IProject)serviceProvider.GetService(projectType);
-                            projectService.RunProject();
-                        }
-                        else
-                            Console.WriteLine($"Could not get type for: {project}");
-                    }
-                    else
-                        Console.WriteLine($"{project.Name} is not currently setup and cannot be run.");
+                    RunnerResult result = serviceProvider.GetService<IProjectRunner>().CreateProjectInstance(project.Name);
+
+                    HandelResult(project.Name, result);
                 }
             }
 
             while (true)
             {
                 Console.WriteLine("Enter the name of the project to run or 'Q' to quit.");
-                Console.WriteLine($"Known projects: {JsonSerializer.Serialize(_projects.Select(project => project.Name))}");
-                var input = Console.ReadLine().ToLower();
+                Console.WriteLine($"Known projects: {JsonSerializer.Serialize(projects.Select(project => project.Name))}");
 
-                if (input == "q")
+                string input = Console.ReadLine();
+
+                if (input.ToLower() == "q")
                     break;
 
-                var project = _projects.FirstOrDefault(project => project.Name.ToLower() == input);
+                RunnerResult result = serviceProvider.GetService<IProjectRunner>().CreateProjectInstance(input);
 
-                if (project != null)
-                {
-                    if (project.Runnable)
-                    {
-                        var assemblyTypes = typeof(BaseProject).Assembly.GetTypes();
-                        var projectType = assemblyTypes.FirstOrDefault(type => type.Name == project.Name);
-                        if (projectType != null)
-                        {
-                            IProject projectService = (IProject)serviceProvider.GetService(projectType);
-                            projectService.RunProject();
-                        }
-                        else
-                            Console.WriteLine($"Could not get type for: {project}");
-                    }
-                    else
-                        Console.WriteLine($"{project.Name} is not currently setup and cannot be run.");
-                }
-                else
-                    Console.WriteLine($"{input} is not a recognised project.");
+                HandelResult(input, result);
+            }
+        }
+
+        private static void HandelResult(string input, RunnerResult result)
+        {
+            switch (result)
+            {
+                case RunnerResult.Success:
+                    Console.WriteLine($"Running project {input}" + Environment.NewLine);
+                    break;
+                
+                case RunnerResult.AnotherProjectRunning:
+                    Console.WriteLine($"Cannot run {input}. Another project is already running." + Environment.NewLine);
+                    break;
+
+                case RunnerResult.ProjectNotRunnable:
+                    Console.WriteLine($"{input} is not currently setup and cannot be run." + Environment.NewLine);
+                    break;
+
+                case RunnerResult.UnknownProject:
+                    Console.WriteLine($"{input} is not a recognised project." + Environment.NewLine);
+                    break;
+
+                case RunnerResult.ClassNotFound:
+                    Console.WriteLine($"Could not get type for: {input}" + Environment.NewLine);
+                    break;
+
+                default:
+                    break;
             }
         }
 
@@ -94,10 +96,10 @@ namespace GPIORunner
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            configuration.GetSection("Projects").Bind(_projects);
+            services.Configure<List<ProjectConfig>>(options => configuration.GetSection("Projects").Bind(options));
 
             services.AddSingleton<GpioController>();
-            services.AddSingleton(_projects);
+            services.AddSingleton<IProjectRunner, ProjectRunner>();
 
             services.AddTransient<LEDBlink>();
             services.AddTransient<LEDSwitch>();
