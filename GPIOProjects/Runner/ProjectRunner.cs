@@ -25,7 +25,7 @@ namespace GPIOProjects.Runner
 
         public bool IsProjectRunning()
         {
-            return _activeProjects.FirstOrDefault() != null;
+            return _activeProjects.Any();
         }
 
         public RunnerResult CreateProjectInstance(string projectName)
