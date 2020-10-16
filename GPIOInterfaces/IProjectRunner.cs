@@ -1,5 +1,4 @@
 ﻿using GPIOInterfaces.Contracts;
-using System.Threading.Tasks;
 
 namespace GPIOInterfaces
 {
@@ -7,6 +6,6 @@ namespace GPIOInterfaces
     {
         public RunnerResult CreateProjectInstance(string projectName);
 
-        public Task GetRunningProject();
+        public bool IsProjectRunning();
     }
 }

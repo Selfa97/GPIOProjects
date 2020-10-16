@@ -14,18 +14,18 @@ namespace GPIOProjects
 
         protected override void Run()
         {
-            Console.WriteLine("Running LEDBlink.cs");
+            // Console.WriteLine("Running LEDBlink.cs");
 
-            Console.WriteLine("Press any key to stop or wait 10 seconds...");
+            // Console.WriteLine("Press any key to stop or wait 10 seconds...");
             var cancellationTokenSource = new CancellationTokenSource(new TimeSpan(hours: 0, minutes: 0, seconds: 10));
             do
             {
-                Console.WriteLine($"LED On for {_sleepTime}ms");
+                // Console.WriteLine($"LED On for {_sleepTime}ms");
                 _controller.Write(_pin, PinValue.High);
 
                 Thread.Sleep(_sleepTime);
 
-                Console.WriteLine($"LED Off for {_sleepTime}ms");
+                // Console.WriteLine($"LED Off for {_sleepTime}ms");
                 _controller.Write(_pin, PinValue.Low);
 
                 Thread.Sleep(_sleepTime);

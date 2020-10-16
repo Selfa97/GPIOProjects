@@ -12,16 +12,16 @@ namespace GPIOProjects
 
         protected override void Run()
         {
-            Console.WriteLine("Running LEDSwitch.cs");
+            // Console.WriteLine("Running LEDSwitch.cs");
 
             if (_controller.Read(_pin) == PinValue.High)
             {
-                Console.WriteLine("Switching off LED...");
+                // Console.WriteLine("Switching off LED...");
                 _controller.Write(_pin, PinValue.Low);
             }
             else if (_controller.Read(_pin) == PinValue.Low)
             {
-                Console.WriteLine("Switching on LED...");
+                // Console.WriteLine("Switching on LED...");
                 _controller.Write(_pin, PinValue.High);
             }
             else

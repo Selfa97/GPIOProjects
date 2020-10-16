@@ -3,6 +3,7 @@
     public enum RunnerResult
     {
         Success,
+        AnotherProjectRunning,
         ClassNotFound,
         ProjectNotRunnable,
         UnknownProject

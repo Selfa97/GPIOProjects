@@ -15,23 +15,24 @@ namespace GPIOProjects.Runner
         private readonly List<ProjectConfig> _projects;
         private readonly IServiceProvider _serviceProvider;
 
-        private static List<Task> _runningProjects;
+        private static List<Task> _activeProjects = new List<Task>();
 
         public ProjectRunner(IOptions<List<ProjectConfig>> options, IServiceProvider serviceProvider)
         {
             _projects = options.Value;
             _serviceProvider = serviceProvider;
-
-            _runningProjects = new List<Task>();
         }
 
-        public Task GetRunningProject()
+        public bool IsProjectRunning()
         {
-            throw new NotImplementedException();
+            return _activeProjects.FirstOrDefault() != null;
         }
 
         public RunnerResult CreateProjectInstance(string projectName)
         {
+            if (IsProjectRunning())
+                return RunnerResult.AnotherProjectRunning;
+
             var project = _projects.FirstOrDefault(project => project.Name.ToLower() == projectName.ToLower());
 
             if (project != null)
@@ -44,7 +45,8 @@ namespace GPIOProjects.Runner
                     {
                         IProject projectService = (IProject)_serviceProvider.GetService(projectType);
                         var runningProject = Task.Run(() => projectService.RunProject());
-                        _runningProjects.Add(runningProject);
+                        runningProject.ContinueWith(finishedProject => RemoveCompletedProject(finishedProject));
+                        _activeProjects.Add(runningProject);
 
                         return RunnerResult.Success;
                     }
@@ -56,6 +58,11 @@ namespace GPIOProjects.Runner
             }
             else
                 return RunnerResult.UnknownProject;
+        }
+
+        private void RemoveCompletedProject(Task finishedProject)
+        {
+            _activeProjects.Remove(finishedProject);
         }
     }
 }
