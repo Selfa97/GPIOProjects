@@ -1,4 +1,5 @@
 ﻿using GPIOProjects.Base;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Device.Gpio;
 using System.Threading;
@@ -10,22 +11,21 @@ namespace GPIOProjects
         private const int _pin = 18;
         private const int _sleepTime = 500;
 
-        public LEDBlink(GpioController controller) : base(controller) { }
+        public LEDBlink(GpioController controller, ILogger<LEDBlink> logger) : base(controller, logger) { }
 
         protected override void Run()
         {
-            // Console.WriteLine("Running LEDBlink.cs");
+            _logger.LogTrace("Running LEDBlink.cs");
 
-            // Console.WriteLine("Press any key to stop or wait 10 seconds...");
             var cancellationTokenSource = new CancellationTokenSource(new TimeSpan(hours: 0, minutes: 0, seconds: 10));
             do
             {
-                // Console.WriteLine($"LED On for {_sleepTime}ms");
+                _logger.LogTrace("LED On for {0}ms.", _sleepTime);
                 _controller.Write(_pin, PinValue.High);
 
                 Thread.Sleep(_sleepTime);
 
-                // Console.WriteLine($"LED Off for {_sleepTime}ms");
+                _logger.LogTrace("LED Off for {0}ms.", _sleepTime);
                 _controller.Write(_pin, PinValue.Low);
 
                 Thread.Sleep(_sleepTime);
@@ -34,6 +34,8 @@ namespace GPIOProjects
 
         protected override void Startup()
         {
+            _logger.LogTrace("Opening pin {0} as an output.", _pin);
+
             if (!_controller.IsPinOpen(_pin))
                 _controller.OpenPin(_pin, PinMode.Output);
             else if (_controller.GetPinMode(_pin) != PinMode.Output)

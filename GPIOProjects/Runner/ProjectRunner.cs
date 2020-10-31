@@ -2,6 +2,7 @@
 using GPIOInterfaces.Contracts;
 using GPIOModels.Configuration;
 using GPIOProjects.Base;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -14,13 +15,17 @@ namespace GPIOProjects.Runner
     {
         private readonly List<ProjectConfig> _projects;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<ProjectRunner> _logger;
 
         private static List<Task> _activeProjects = new List<Task>();
 
-        public ProjectRunner(IOptions<List<ProjectConfig>> options, IServiceProvider serviceProvider)
+        public ProjectRunner(IOptions<List<ProjectConfig>> options, 
+                             IServiceProvider serviceProvider,
+                             ILogger<ProjectRunner> logger)
         {
             _projects = options.Value;
             _serviceProvider = serviceProvider;
+            _logger = logger;
         }
 
         public bool IsProjectRunning()
@@ -28,41 +33,58 @@ namespace GPIOProjects.Runner
             return _activeProjects.Any();
         }
 
-        public RunnerResult CreateProjectInstance(string projectName)
+        public (RunnerResult, string) CreateProjectInstance(string projectName)
         {
-            if (IsProjectRunning())
-                return RunnerResult.AnotherProjectRunning;
-
             var project = _projects.FirstOrDefault(project => project.Name.ToLower() == projectName.ToLower());
+            projectName = project?.Name ?? projectName;
 
-            if (project != null)
+            try
             {
-                if (project.Runnable)
+                if (IsProjectRunning())
                 {
-                    var assemblyTypes = typeof(BaseProject).Assembly.GetTypes();
-                    var projectType = assemblyTypes.FirstOrDefault(type => type.Name == project.Name);
-                    if (projectType != null)
-                    {
-                        IProject projectService = (IProject)_serviceProvider.GetService(projectType);
-                        var runningProject = Task.Run(() => projectService.RunProject());
-                        runningProject.ContinueWith(finishedProject => RemoveCompletedProject(finishedProject));
-                        _activeProjects.Add(runningProject);
+                    _logger.LogInformation("Another project is already running. Cannot start {0}.", projectName);
+                    return (RunnerResult.AnotherProjectRunning, projectName);
+                }
 
-                        return RunnerResult.Success;
+                if (project != null)
+                {
+                    if (project.Runnable)
+                    {
+                        var assemblyTypes = typeof(BaseProject).Assembly.GetTypes();
+                        var projectType = assemblyTypes.FirstOrDefault(type => type.Name == projectName);
+                        if (projectType != null)
+                        {
+                            IProject projectService = (IProject)_serviceProvider.GetService(projectType);
+                            var runningProject = Task.Run(() => projectService.RunProject());
+                            runningProject.ContinueWith(finishedProject => _activeProjects.Remove(finishedProject));
+                            _activeProjects.Add(runningProject);
+
+                            _logger.LogInformation("Successfully started project {0}.", projectName);
+                            return (RunnerResult.Success, projectName);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Could not find project class for {0}.", projectName);
+                            return (RunnerResult.ClassNotFound, projectName);
+                        }
                     }
                     else
-                        return RunnerResult.ClassNotFound;
+                    {
+                        _logger.LogInformation("Project {0} is not setup/runnable.", projectName);
+                        return (RunnerResult.ProjectNotRunnable, projectName);
+                    }
                 }
                 else
-                    return RunnerResult.ProjectNotRunnable;
+                {
+                    _logger.LogInformation("{0} is not a recognised project.", projectName);
+                    return (RunnerResult.UnknownProject, projectName);
+                }
             }
-            else
-                return RunnerResult.UnknownProject;
-        }
-
-        private void RemoveCompletedProject(Task finishedProject)
-        {
-            _activeProjects.Remove(finishedProject);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not create instance of project {0}.", projectName);
+                throw ex;
+            }
         }
     }
 }

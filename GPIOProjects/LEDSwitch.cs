@@ -1,4 +1,5 @@
 ﻿using GPIOProjects.Base;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Device.Gpio;
 
@@ -8,20 +9,20 @@ namespace GPIOProjects
     {
         private const int _pin = 18;
 
-        public LEDSwitch(GpioController controller) : base(controller) { }
+        public LEDSwitch(GpioController controller, ILogger<LEDSwitch> logger) : base(controller, logger) { }
 
         protected override void Run()
         {
-            // Console.WriteLine("Running LEDSwitch.cs");
+            _logger.LogTrace("Running LEDSwitch.cs");
 
             if (_controller.Read(_pin) == PinValue.High)
             {
-                // Console.WriteLine("Switching off LED...");
+                _logger.LogTrace("Switching off LED...");
                 _controller.Write(_pin, PinValue.Low);
             }
             else if (_controller.Read(_pin) == PinValue.Low)
             {
-                // Console.WriteLine("Switching on LED...");
+                _logger.LogTrace("Switching on LED...");
                 _controller.Write(_pin, PinValue.High);
             }
             else
@@ -30,6 +31,8 @@ namespace GPIOProjects
 
         protected override void Startup()
         {
+            _logger.LogTrace("Opening pin {0} as an output.", _pin);
+
             if (!_controller.IsPinOpen(_pin))
                 _controller.OpenPin(_pin, PinMode.Output);
             else if (_controller.GetPinMode(_pin) != PinMode.Output)
