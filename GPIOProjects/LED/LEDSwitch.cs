@@ -1,15 +1,22 @@
 ﻿using GPIOProjects.Base;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Device.Gpio;
 
-namespace GPIOProjects
+namespace GPIOProjects.LED
 {
     public class LEDSwitch : BaseProject
     {
-        private const int _pin = 18;
+        private readonly int _pin;
+        private readonly List<int> _pins;
+        public override List<int> Pins => _pins;
 
-        public LEDSwitch(GpioController controller, ILogger<LEDSwitch> logger) : base(controller, logger) { }
+        public LEDSwitch(GpioController controller, ILogger<LEDSwitch> logger) : base(controller, logger) 
+        {
+            _pin = 18;
+            _pins = new List<int> { _pin };
+        }
 
         protected override void Run()
         {
@@ -25,8 +32,6 @@ namespace GPIOProjects
                 _logger.LogTrace("Switching on LED...");
                 _controller.Write(_pin, PinValue.High);
             }
-            else
-                throw new ApplicationException("Unknown Pin Value.");
         }
 
         protected override void Startup()

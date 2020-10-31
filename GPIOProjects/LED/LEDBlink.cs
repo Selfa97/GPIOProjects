@@ -1,17 +1,25 @@
 ﻿using GPIOProjects.Base;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Device.Gpio;
 using System.Threading;
 
-namespace GPIOProjects
+namespace GPIOProjects.LED
 {
     public class LEDBlink : BaseProject
     {
-        private const int _pin = 18;
-        private const int _sleepTime = 500;
+        private readonly int _pin;
+        private readonly List<int> _pins;
+        private const int _sleepTime = 200;
 
-        public LEDBlink(GpioController controller, ILogger<LEDBlink> logger) : base(controller, logger) { }
+        public override List<int> Pins => _pins;
+
+        public LEDBlink(GpioController controller, ILogger<LEDBlink> logger) : base(controller, logger) 
+        {
+            _pin = 18;
+            _pins = new List<int> { _pin };
+        }
 
         protected override void Run()
         {
