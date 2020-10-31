@@ -11,6 +11,8 @@ using System.Text.Json;
 using GPIOInterfaces.Contracts;
 using GPIOProjects.Runner;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 #if DEBUG
 using System.Diagnostics;
 using System.Threading;
@@ -66,7 +68,7 @@ namespace GPIORunner
                 case RunnerResult.Success:
                     Console.WriteLine($"Running project {name}" + Environment.NewLine);
                     break;
-                
+
                 case RunnerResult.AnotherProjectRunning:
                     Console.WriteLine($"Cannot run {name}. Another project is already running." + Environment.NewLine);
                     break;
@@ -97,6 +99,13 @@ namespace GPIORunner
                 .Build();
 
             services.Configure<List<ProjectConfig>>(options => configuration.GetSection("Projects").Bind(options));
+
+            services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.ClearProviders();
+                loggingBuilder.AddConfiguration(configuration.GetSection("Logging"));
+                loggingBuilder.AddNLog(configuration);
+            });
 
             services.AddSingleton<GpioController>();
             services.AddSingleton<IProjectRunner, ProjectRunner>();
