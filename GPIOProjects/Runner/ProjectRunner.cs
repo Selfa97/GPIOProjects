@@ -17,7 +17,8 @@ namespace GPIOProjects.Runner
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<ProjectRunner> _logger;
 
-        private static List<Task> _activeProjects = new List<Task>();
+        private readonly object _activePinsLock = new object();
+        private static List<int> _activePins = new List<int>();
 
         public ProjectRunner(IOptions<List<ProjectConfig>> options, 
                              IServiceProvider serviceProvider,
@@ -30,7 +31,7 @@ namespace GPIOProjects.Runner
 
         public bool IsProjectRunning()
         {
-            return _activeProjects.Any();
+            return _activePins.Any();
         }
 
         public (RunnerResult, string) CreateProjectInstance(string projectName)
@@ -40,12 +41,6 @@ namespace GPIOProjects.Runner
 
             try
             {
-                if (IsProjectRunning())
-                {
-                    _logger.LogInformation("Another project is already running. Cannot start {0}.", projectName);
-                    return (RunnerResult.AnotherProjectRunning, projectName);
-                }
-
                 if (project != null)
                 {
                     if (project.Runnable)
@@ -55,9 +50,25 @@ namespace GPIOProjects.Runner
                         if (projectType != null)
                         {
                             IProject projectService = (IProject)_serviceProvider.GetService(projectType);
-                            var runningProject = Task.Run(() => projectService.RunProject());
-                            runningProject.ContinueWith(finishedProject => _activeProjects.Remove(finishedProject));
-                            _activeProjects.Add(runningProject);
+
+                            if (IsProjectRunning() && _activePins.Intersect(projectService.Pins).Any())
+                            {
+                                _logger.LogInformation("Another running project is currently using the required pins. Cannot start {0}.", projectName);
+                                return (RunnerResult.AnotherProjectRunning, projectName);
+                            }
+                            
+                            Task.Run(() => projectService.RunProject())
+                                           .ContinueWith(task => {
+                                               lock (_activePinsLock)
+                                               {
+                                                   _activePins = _activePins.Except(projectService.Pins).ToList();
+                                               }
+                                           });
+
+                            lock (_activePinsLock)
+                            {
+                                _activePins.AddRange(projectService.Pins);
+                            }
 
                             _logger.LogInformation("Successfully started project {0}.", projectName);
                             return (RunnerResult.Success, projectName);

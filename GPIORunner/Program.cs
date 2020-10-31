@@ -1,5 +1,4 @@
 ﻿using GPIOInterfaces;
-using GPIOProjects;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -13,6 +12,7 @@ using GPIOProjects.Runner;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
+using GPIOProjects.LED;
 #if DEBUG
 using System.Diagnostics;
 using System.Threading;
@@ -110,8 +110,10 @@ namespace GPIORunner
             services.AddSingleton<GpioController>();
             services.AddSingleton<IProjectRunner, ProjectRunner>();
 
+            // LED Projects
             services.AddTransient<LEDBlink>();
             services.AddTransient<LEDSwitch>();
+            services.AddTransient<LEDBreathe>();
 
             return services;
         }
