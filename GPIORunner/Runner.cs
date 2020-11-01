@@ -9,20 +9,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GPIOProjects.Runner
+namespace GPIORunner
 {
-    public class ProjectRunner : IProjectRunner
+    public class Runner : IRunner
     {
         private readonly List<ProjectConfig> _projects;
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<ProjectRunner> _logger;
+        private readonly ILogger<Runner> _logger;
 
         private readonly object _activePinsLock = new object();
         private static List<int> _activePins = new List<int>();
 
-        public ProjectRunner(IOptions<List<ProjectConfig>> options, 
+        public Runner(IOptions<List<ProjectConfig>> options, 
                              IServiceProvider serviceProvider,
-                             ILogger<ProjectRunner> logger)
+                             ILogger<Runner> logger)
         {
             _projects = options.Value;
             _serviceProvider = serviceProvider;
