@@ -3,16 +3,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
-using System.Device.Gpio;
 using System.Linq;
 using GPIOModels.Configuration;
 using System.Text.Json;
 using GPIOInterfaces.Contracts;
-using GPIOProjects.Runner;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
-using GPIOProjects.LED;
+using NLog;
+using NLog.Targets;
 #if DEBUG
 using System.Diagnostics;
 using System.Threading;
@@ -39,9 +38,9 @@ namespace GPIORunner
             {
                 if (project.RunOnStart)
                 {
-                    (RunnerResult result, string name) = serviceProvider.GetService<IProjectRunner>().CreateProjectInstance(project.Name);
+                    (RunnerResult result, string name) = serviceProvider.GetService<IRunner>().CreateProjectInstance(project.Name);
 
-                    HandelResult(name, result);
+                    HandleResult(name, result);
                 }
             }
 
@@ -55,13 +54,13 @@ namespace GPIORunner
                 if (input.ToLower() == "q")
                     break;
 
-                (RunnerResult result, string name) = serviceProvider.GetService<IProjectRunner>().CreateProjectInstance(input);
+                (RunnerResult result, string name) = serviceProvider.GetService<IRunner>().CreateProjectInstance(input);
 
-                HandelResult(name, result);
+                HandleResult(name, result);
             }
         }
 
-        private static void HandelResult(string name, RunnerResult result)
+        private static void HandleResult(string name, RunnerResult result)
         {
             switch (result)
             {
@@ -98,7 +97,7 @@ namespace GPIORunner
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            services.Configure<List<ProjectConfig>>(options => configuration.GetSection("Projects").Bind(options));
+            services.AddSharedConfiguration(configuration);
 
             services.AddLogging(loggingBuilder =>
             {
@@ -107,15 +106,24 @@ namespace GPIORunner
                 loggingBuilder.AddNLog(configuration);
             });
 
-            services.AddSingleton<GpioController>();
-            services.AddSingleton<IProjectRunner, ProjectRunner>();
+            DisableConsoleLogging();
 
-            // LED Projects
-            services.AddTransient<LEDBlink>();
-            services.AddTransient<LEDSwitch>();
-            services.AddTransient<LEDBreathe>();
+            // Register event handler for when configuration is reloaded
+            LogManager.ConfigurationReloaded += (sender, e) =>
+            {
+                DisableConsoleLogging();
+            };
+
+            services.AddSharedEssentials();
+            services.AddProjects();
 
             return services;
+        }
+
+        private static void DisableConsoleLogging()
+        {
+            var configuration = LogManager.Configuration;
+            configuration.RemoveTarget("Console");
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace GPIOInterfaces
 {
-    public interface IProjectRunner
+    public interface IRunner
     {
         public (RunnerResult, string) CreateProjectInstance(string projectName);
 
