@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace GPIORunner
@@ -56,19 +57,21 @@ namespace GPIORunner
                                 _logger.LogInformation("Another running project is currently using the required pins. Cannot start {0}.", projectName);
                                 return (RunnerResult.AnotherProjectRunning, projectName);
                             }
-                            
+
+                            _logger.LogTrace("Adding pins {0} to active pins.", JsonSerializer.Serialize(projectService.Pins));
+                            lock (_activePinsLock)
+                            {
+                                _activePins.AddRange(projectService.Pins);
+                            }
+
                             Task.Run(() => projectService.RunProject())
                                            .ContinueWith(task => {
                                                lock (_activePinsLock)
                                                {
                                                    _activePins = _activePins.Except(projectService.Pins).ToList();
                                                }
+                                               _logger.LogTrace("Removing pins {0} from active pins.", JsonSerializer.Serialize(projectService.Pins));
                                            });
-
-                            lock (_activePinsLock)
-                            {
-                                _activePins.AddRange(projectService.Pins);
-                            }
 
                             _logger.LogInformation("Successfully started project {0}.", projectName);
                             return (RunnerResult.Success, projectName);

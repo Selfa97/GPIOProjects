@@ -25,8 +25,10 @@ namespace GPIORunner
         {
             // LED Projects
             services.AddTransient<LEDBlink>();
-            services.AddTransient<LEDSwitch>();
             services.AddTransient<LEDBreathe>();
+            services.AddTransient<LEDBreatheSoftware>();
+            services.AddTransient<LEDSwitch>();
+            services.AddTransient<RGBRandom>();
         }
     }
 }
