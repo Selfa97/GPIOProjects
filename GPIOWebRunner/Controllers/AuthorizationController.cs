@@ -1,49 +1,66 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using GPIOModels.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
+using System.Text;
 
 namespace GPIOWebRunner.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api")]
     [ApiController]
-    public class AuthorizationController
+    public class AuthorizationController : Controller
     {
         private readonly List<UserModel> _knownUsers;
         private readonly JWTConfig _jwtConfig;
-        
+
         public AuthorizationController(
             IOptions<List<UserModel>> knownUsers,
-            IOptions<JWTConfig> jwtConfig
-        )
+            IOptions<JWTConfig> jwtConfig)
         {
             _knownUsers = knownUsers.Value;
             _jwtConfig = jwtConfig.Value;
         }
 
         [AllowAnonymous]
-        [HttpPost]
+        [HttpPost("authorize")]
         public IActionResult Authorize([FromBody] UserModel user)
         {
             IActionResult response = new UnauthorizedResult();
 
             UserModel authenticatedUser = AuthenticateUser(user);
 
-            if (user != null)
+            if (authenticatedUser != null)
             {
-                string token = GenerateJWT()
+                string tokenBody = GenerateJWT(authenticatedUser);
+                response = new OkObjectResult(new { token = tokenBody });
             }
 
             return response;
         }
 
-        private string GenerateJWT()
+        private string GenerateJWT(UserModel user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new Claim[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Username)
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _jwtConfig.Issuer,
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(_jwtConfig.ExpiryInMinutes),
+                signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         private UserModel AuthenticateUser(UserModel user)

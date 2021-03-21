@@ -1,5 +1,6 @@
 ﻿using GPIOInterfaces;
 using GPIOInterfaces.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -8,9 +9,10 @@ using System.Text.Json;
 
 namespace GPIOWebRunner.Controllers
 {
-    [Route("api/projects")]
+    [Route("api/[controller]")]
     [ApiController]
-    public class ProjectController
+    [Authorize]
+    public class ProjectController : Controller
     {
         private readonly ILogger<ProjectController> _logger;
         private readonly IRunner _runner; 

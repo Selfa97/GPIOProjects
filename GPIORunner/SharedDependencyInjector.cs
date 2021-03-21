@@ -14,7 +14,7 @@ namespace GPIORunner
         {
             services.Configure<List<ProjectConfig>>(section => configuration.GetSection("Projects").Bind(section));
             services.Configure<List<UserModel>>(section => configuration.GetSection("Users").Bind(section));
-            services.Configure<JWTConfig>(jwt => configuration.Get<JWTConfig>());
+            services.Configure<JWTConfig>(section => configuration.GetSection("JWT").Bind(section));
         }
 
         public static void AddSharedEssentials(this IServiceCollection services)
