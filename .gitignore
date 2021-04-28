@@ -5,6 +5,7 @@
 
 # User-defined directories
 Scripts/
+.vscode/
 
 # User-specific files
 *.rsuser
