@@ -1,6 +1,7 @@
 using GPIOModels.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -18,13 +19,16 @@ namespace GPIOWebRunner.Controllers
     {
         private readonly List<UserModel> _knownUsers;
         private readonly JWTConfig _jwtConfig;
+        private readonly ILogger<AuthorizationController> _logger;
 
         public AuthorizationController(
             IOptions<List<UserModel>> knownUsers,
-            IOptions<JWTConfig> jwtConfig)
+            IOptions<JWTConfig> jwtConfig,
+            ILogger<AuthorizationController> logger)
         {
             _knownUsers = knownUsers.Value;
             _jwtConfig = jwtConfig.Value;
+            _logger = logger;
         }
 
         [AllowAnonymous]
@@ -37,8 +41,14 @@ namespace GPIOWebRunner.Controllers
 
             if (authenticatedUser != null)
             {
+                _logger.LogInformation($"Authenticated user: {authenticatedUser.Username}");
+
                 string tokenBody = GenerateJWT(authenticatedUser);
                 response = new OkObjectResult(new { token = tokenBody });
+            }
+            else
+            {
+                _logger.LogInformation($"Could not authenticate user: {user.Username}");
             }
 
             return response;
@@ -51,14 +61,14 @@ namespace GPIOWebRunner.Controllers
 
             var claims = new Claim[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Username)
+        new Claim(JwtRegisteredClaimNames.Sub, user.Username)
             };
 
             var token = new JwtSecurityToken(
-                issuer: _jwtConfig.Issuer,
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(_jwtConfig.ExpiryInMinutes),
-                signingCredentials: credentials);
+            issuer: _jwtConfig.Issuer,
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(_jwtConfig.ExpiryInMinutes),
+            signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
@@ -66,8 +76,8 @@ namespace GPIOWebRunner.Controllers
         private UserModel AuthenticateUser(UserModel user)
         {
             UserModel authenticatedUser = _knownUsers
-                .Where(u => u.Username == user.Username && u.Password == user.Password)?
-                .Single();
+            .Where(u => u.Username == user.Username && u.Password == user.Password)
+            .SingleOrDefault();
 
             return authenticatedUser;
         }

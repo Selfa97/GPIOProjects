@@ -34,12 +34,20 @@ namespace GPIOWebRunner.Controllers
 
                 if (username == "Admin")
                 {
-                    _logger.LogInformation("Shutting down GPIOWebRunnner");
+                    _logger.LogInformation("Shutting down GPIOWebRunner");
 
                     _applicationLifetime.StopApplication();
 
                     response = new OkResult();
                 }
+                else
+                {
+                    _logger.LogInformation($"User {username} is not permitted to shutdown the application.");
+                }
+            }
+            else
+            {
+                _logger.LogInformation("No authorization header was found in the request.");
             }
 
             return response;

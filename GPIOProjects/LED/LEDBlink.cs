@@ -15,7 +15,7 @@ namespace GPIOProjects.LED
 
         public override List<int> Pins => _pins;
 
-        public LEDBlink(GpioController controller, ILogger<LEDBlink> logger) : base(controller, logger) 
+        public LEDBlink(GpioController controller, ILogger<LEDBlink> logger) : base(controller, logger)
         {
             _pin = 18;
             _pins = new List<int> { _pin };
@@ -37,7 +37,7 @@ namespace GPIOProjects.LED
                 _controller.Write(_pin, PinValue.Low);
 
                 Thread.Sleep(_sleepTime);
-            } while (!cancellationTokenSource.Token.IsCancellationRequested); 
+            } while (!cancellationTokenSource.Token.IsCancellationRequested);
         }
 
         protected override void Startup()

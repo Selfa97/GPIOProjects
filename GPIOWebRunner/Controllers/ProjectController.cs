@@ -15,7 +15,7 @@ namespace GPIOWebRunner.Controllers
     public class ProjectController : Controller
     {
         private readonly ILogger<ProjectController> _logger;
-        private readonly IRunner _runner; 
+        private readonly IRunner _runner;
 
         public ProjectController(ILogger<ProjectController> logger, IRunner runner)
         {

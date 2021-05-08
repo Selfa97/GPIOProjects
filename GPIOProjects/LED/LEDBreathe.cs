@@ -22,7 +22,7 @@ namespace GPIOProjects.LED
 
         public override List<int> Pins => _pins;
 
-        public LEDBreathe(GpioController controller, ILogger<LEDBreathe> logger) : base(controller, logger) 
+        public LEDBreathe(GpioController controller, ILogger<LEDBreathe> logger) : base(controller, logger)
         {
             _pins = new List<int> { 12 };
         }
