@@ -1,12 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Security.Claims;
 
 namespace GPIOWebRunner.Controllers
 {
-    [Route("api/admin")]
+    [Route("api/[controller]")]
     [ApiController]
-    public class AdminController
+    [Authorize]
+    public class AdminController : Controller
     {
         private readonly IHostApplicationLifetime _applicationLifetime;
         private readonly ILogger<AdminController> _logger;
@@ -20,11 +25,32 @@ namespace GPIOWebRunner.Controllers
         [HttpGet("shutdown")]
         public IActionResult Shutdown()
         {
-            _logger.LogInformation("Shutting down GPIOWebRunnner");
+            IActionResult response = new UnauthorizedResult();
+            ClaimsPrincipal currentUser = HttpContext.User;
 
-            _applicationLifetime.StopApplication();
+            if (currentUser != null)
+            {
+                var username = currentUser.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
-            return new OkResult();
+                if (username == "Admin")
+                {
+                    _logger.LogInformation("Shutting down GPIOWebRunner");
+
+                    _applicationLifetime.StopApplication();
+
+                    response = new OkResult();
+                }
+                else
+                {
+                    _logger.LogInformation($"User {username} is not permitted to shutdown the application.");
+                }
+            }
+            else
+            {
+                _logger.LogInformation("No authorization header was found in the request.");
+            }
+
+            return response;
         }
     }
 }

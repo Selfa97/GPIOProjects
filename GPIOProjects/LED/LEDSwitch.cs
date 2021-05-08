@@ -12,7 +12,7 @@ namespace GPIOProjects.LED
         private readonly List<int> _pins;
         public override List<int> Pins => _pins;
 
-        public LEDSwitch(GpioController controller, ILogger<LEDSwitch> logger) : base(controller, logger) 
+        public LEDSwitch(GpioController controller, ILogger<LEDSwitch> logger) : base(controller, logger)
         {
             _pin = 18;
             _pins = new List<int> { _pin };

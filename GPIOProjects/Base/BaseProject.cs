@@ -29,7 +29,7 @@ namespace GPIOProjects.Base
 
                 Run();
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Error running project.");
             }

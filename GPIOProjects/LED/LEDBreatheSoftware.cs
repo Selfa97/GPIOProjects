@@ -11,7 +11,7 @@ namespace GPIOProjects.LED
     public class LEDBreatheSoftware : BaseProject
     {
         private const int _pin = 18;
-        private const int _frequency = 1024; 
+        private const int _frequency = 1024;
         private readonly List<int> _pins;
         private SoftwarePwmChannel _pwmChannel;
 

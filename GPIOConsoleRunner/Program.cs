@@ -11,7 +11,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using NLog;
-using NLog.Targets;
 #if DEBUG
 using System.Diagnostics;
 using System.Threading;
@@ -94,8 +93,8 @@ namespace GPIORunner
             var services = new ServiceCollection();
 
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .Build();
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
 
             services.AddSharedConfiguration(configuration);
 

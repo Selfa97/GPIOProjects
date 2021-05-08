@@ -21,9 +21,9 @@ namespace GPIORunner
         private readonly object _activePinsLock = new object();
         private static List<int> _activePins = new List<int>();
 
-        public Runner(IOptions<List<ProjectConfig>> options, 
-                             IServiceProvider serviceProvider,
-                             ILogger<Runner> logger)
+        public Runner(IOptions<List<ProjectConfig>> options,
+                     IServiceProvider serviceProvider,
+                     ILogger<Runner> logger)
         {
             _projects = options.Value;
             _serviceProvider = serviceProvider;
@@ -65,13 +65,14 @@ namespace GPIORunner
                             }
 
                             Task.Run(() => projectService.RunProject())
-                                           .ContinueWith(task => {
-                                               lock (_activePinsLock)
-                                               {
-                                                   _activePins = _activePins.Except(projectService.Pins).ToList();
-                                               }
-                                               _logger.LogTrace("Removing pins {0} from active pins.", JsonSerializer.Serialize(projectService.Pins));
-                                           });
+                                   .ContinueWith(task =>
+                                   {
+                                       lock (_activePinsLock)
+                                       {
+                                           _activePins = _activePins.Except(projectService.Pins).ToList();
+                                       }
+                                       _logger.LogTrace("Removing pins {0} from active pins.", JsonSerializer.Serialize(projectService.Pins));
+                                   });
 
                             _logger.LogInformation("Successfully started project {0}.", projectName);
                             return (RunnerResult.Success, projectName);
