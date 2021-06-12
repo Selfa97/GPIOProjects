@@ -1,4 +1,4 @@
-namespace GPIOModels.Configuration
+﻿namespace GPIOModels.Authorization
 {
     public class UserModel
     {

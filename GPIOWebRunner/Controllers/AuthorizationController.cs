@@ -1,6 +1,8 @@
+using GPIOModels.Authorization;
 using GPIOModels.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -17,17 +19,20 @@ namespace GPIOWebRunner.Controllers
     [ApiController]
     public class AuthorizationController : Controller
     {
-        private readonly List<UserModel> _knownUsers;
+        private readonly List<string> _knownUsers;
         private readonly JWTConfig _jwtConfig;
+        private readonly IConfiguration _config;
         private readonly ILogger<AuthorizationController> _logger;
 
         public AuthorizationController(
-            IOptions<List<UserModel>> knownUsers,
+            IOptions<List<string>> knownUsers,
             IOptions<JWTConfig> jwtConfig,
+            IConfiguration config,
             ILogger<AuthorizationController> logger)
         {
             _knownUsers = knownUsers.Value;
             _jwtConfig = jwtConfig.Value;
+            _config = config;
             _logger = logger;
         }
 
@@ -35,16 +40,16 @@ namespace GPIOWebRunner.Controllers
         [HttpPost("authorize")]
         public IActionResult Authorize([FromBody] UserModel user)
         {
-            IActionResult response = new UnauthorizedResult();
+            IActionResult response = Unauthorized();
 
-            UserModel authenticatedUser = AuthenticateUser(user);
+            string authenticatedUsername = AuthenticateUser(user);
 
-            if (authenticatedUser != null)
+            if (authenticatedUsername != null)
             {
-                _logger.LogInformation($"Authenticated user: {authenticatedUser.Username}");
+                _logger.LogInformation($"Authenticated user: {authenticatedUsername}");
 
-                string tokenBody = GenerateJWT(authenticatedUser);
-                response = new OkObjectResult(new { token = tokenBody });
+                string tokenBody = GenerateJWT(authenticatedUsername);
+                response = Ok(new { token = tokenBody });
             }
             else
             {
@@ -54,14 +59,14 @@ namespace GPIOWebRunner.Controllers
             return response;
         }
 
-        private string GenerateJWT(UserModel user)
+        private string GenerateJWT(string username)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWTSigningSecret"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new Claim[]
             {
-        new Claim(JwtRegisteredClaimNames.Sub, user.Username)
+                new Claim(JwtRegisteredClaimNames.Sub, username)
             };
 
             var token = new JwtSecurityToken(
@@ -73,13 +78,13 @@ namespace GPIOWebRunner.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private UserModel AuthenticateUser(UserModel user)
+        private string AuthenticateUser(UserModel user)
         {
-            UserModel authenticatedUser = _knownUsers
-            .Where(u => u.Username == user.Username && u.Password == user.Password)
+            string authenticatedUsername = _knownUsers
+            .Where(known => user.Username == known && user.Password == _config[$"{known}:Password"])
             .SingleOrDefault();
 
-            return authenticatedUser;
+            return authenticatedUsername;
         }
     }
 }

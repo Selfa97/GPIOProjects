@@ -1,4 +1,7 @@
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Web;
@@ -33,6 +36,14 @@ namespace GPIOWebRunner
             Host.CreateDefaultBuilder(args)
             .ConfigureWebHostDefaults(webBuilder =>
             {
+                webBuilder.ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    var appSettings = config.Build();
+                    config.AddAzureKeyVault(
+                        new Uri($"https://{appSettings["Azure:KeyVaultName"]}.vault.azure.net/"),
+                        new DefaultAzureCredential(),
+                        new KeyVaultSecretManager());
+                });
                 webBuilder.UseContentRoot(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
                 webBuilder.UseKestrel();
                 webBuilder.UseUrls($"http://*:{_port}");

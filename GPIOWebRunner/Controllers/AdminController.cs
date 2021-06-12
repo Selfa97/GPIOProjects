@@ -25,7 +25,7 @@ namespace GPIOWebRunner.Controllers
         [HttpGet("shutdown")]
         public IActionResult Shutdown()
         {
-            IActionResult response = new UnauthorizedResult();
+            IActionResult response = Unauthorized();
             ClaimsPrincipal currentUser = HttpContext.User;
 
             if (currentUser != null)
@@ -38,7 +38,7 @@ namespace GPIOWebRunner.Controllers
 
                     _applicationLifetime.StopApplication();
 
-                    response = new OkResult();
+                    response = Ok();
                 }
                 else
                 {

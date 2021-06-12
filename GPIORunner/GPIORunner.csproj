@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.11.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\GPIOInterfaces\GPIOInterfaces.csproj" />
     <ProjectReference Include="..\GPIOProjects\GPIOProjects.csproj" />
   </ItemGroup>
